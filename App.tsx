@@ -59,22 +59,21 @@ const App: React.FC = () => {
   const tick = useCallback(() => {
     setRemainingSeconds((prev) => {
       const next = prev - 1;
+      let alertPlayed = false;
       
       // 1. Check Custom Alerts
       if (soundEnabled) {
         const matchingAlert = alerts.find(a => a.remainingSeconds === next);
         if (matchingAlert) {
             audioService.playSequence(matchingAlert.beepCount);
+            alertPlayed = true;
         }
       }
 
       // 2. Check Continuous Warning (Visual Zone)
       // Play tick sound every second during warning zone, UNLESS we just played a custom alert
-      // We prioritize custom alert if both happen at same second, or we can overlay them.
-      // Let's overlay them but maybe slightly different pitch in service handles it.
-      if (soundEnabled && next > 0 && next <= warningSeconds) {
-        // Play tick sound every second during warning
-        // We delay it slightly so it doesn't clash perfectly with the pip if they happen together
+      if (soundEnabled && !alertPlayed && next > 0 && next <= warningSeconds) {
+        // We delay it slightly so it doesn't clash perfectly with other sounds
         setTimeout(() => audioService.playWarning(), 100); 
       }
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { TimerStatus } from '../types';
 
 interface DialProps {
@@ -13,6 +13,8 @@ const Dial: React.FC<DialProps> = ({ totalSeconds, remainingSeconds, warningThre
   const stroke = 12;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
+  
+  const [glitchText, setGlitchText] = useState<string | null>(null);
 
   const strokeDashoffset = useMemo(() => {
     if (totalSeconds === 0) return 0;
@@ -43,6 +45,49 @@ const Dial: React.FC<DialProps> = ({ totalSeconds, remainingSeconds, warningThre
   const displayTime = `${hours.toString().padStart(2, '0')}:${minutes
     .toString()
     .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  // Glitch Effect Logic
+  useEffect(() => {
+    if (!isWarning || status !== TimerStatus.RUNNING) {
+        setGlitchText(null);
+        return;
+    }
+
+    // Urgency factor: 0 (start of warning) -> 1 (near zero)
+    // Helps increase glitch frequency as time runs out
+    const urgency = Math.max(0, Math.min(1, 1 - (remainingSeconds / warningThreshold)));
+    
+    // Check for glitch trigger more frequently
+    const intervalId = setInterval(() => {
+        // Base probability 10%, scales up to 40% with urgency
+        const probability = 0.1 + (urgency * 0.3);
+        
+        if (Math.random() < probability) {
+            const chars = "0123456789!@#$%^&*?><";
+            const len = displayTime.length;
+            let randomized = "";
+            for (let i = 0; i < len; i++) {
+                if (displayTime[i] === ':' && Math.random() > 0.3) {
+                    randomized += ":"; // Mostly keep colons
+                } else {
+                    randomized += chars[Math.floor(Math.random() * chars.length)];
+                }
+            }
+            setGlitchText(randomized);
+
+            // Clear glitch very quickly (50-150ms)
+            setTimeout(() => {
+                setGlitchText(null);
+            }, 50 + Math.random() * 100);
+        }
+    }, 200); // Try to glitch every 200ms
+
+    return () => clearInterval(intervalId);
+  }, [isWarning, status, remainingSeconds, warningThreshold, displayTime]);
+
+  const finalDisplayText = isFinished 
+    ? '給我滾下台' 
+    : (glitchText || displayTime);
 
   return (
     <div className={`relative flex items-center justify-center rounded-full transition-all duration-500 ${bgGlow} ${isWarning && status === TimerStatus.RUNNING ? 'animate-pulse-fast' : ''} ${isFinished ? 'animate-shake' : ''}`}>
@@ -76,8 +121,8 @@ const Dial: React.FC<DialProps> = ({ totalSeconds, remainingSeconds, warningThre
       <div className="absolute flex flex-col items-center justify-center w-[180px] text-center">
         <span className={`font-bold tracking-wider tabular-nums drop-shadow-md transition-all duration-300 ${
             isFinished ? 'text-red-500 text-4xl leading-tight' : 'text-white text-5xl font-mono'
-        }`}>
-          {isFinished ? '給我滾下台' : displayTime}
+        } ${glitchText ? 'text-amber-300' : ''}`}>
+          {finalDisplayText}
         </span>
         <span className={`text-xs uppercase tracking-[0.2em] mt-2 font-semibold ${isWarning ? 'text-amber-400' : 'text-gray-400'}`}>
           {status === TimerStatus.FINISHED ? 'TIME UP' : isWarning ? 'WARNING' : 'REMAINING'}

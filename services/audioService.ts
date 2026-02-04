@@ -65,14 +65,20 @@ class AudioService {
 
   public playSequence(count: number) {
     if (count <= 0) return;
-    let played = 0;
-    const interval = setInterval(() => {
-        this.playPip();
-        played++;
-        if (played >= count) {
-            clearInterval(interval);
-        }
-    }, 150);
+    
+    // Play first one immediately for responsiveness
+    this.playPip();
+
+    if (count > 1) {
+        let played = 1;
+        const interval = setInterval(() => {
+            this.playPip();
+            played++;
+            if (played >= count) {
+                clearInterval(interval);
+            }
+        }, 150);
+    }
   }
 
   public playWarning() {
