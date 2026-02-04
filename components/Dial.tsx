@@ -118,9 +118,9 @@ const Dial: React.FC<DialProps> = ({ totalSeconds, remainingSeconds, warningThre
           cy={radius}
         />
       </svg>
-      <div className="absolute flex flex-col items-center justify-center w-[180px] text-center">
+      <div className="absolute flex flex-col items-center justify-center w-[200px] text-center">
         <span className={`font-bold tracking-wider tabular-nums drop-shadow-md transition-all duration-300 ${
-            isFinished ? 'text-red-500 text-4xl leading-tight' : 'text-white text-5xl font-mono'
+            isFinished ? 'text-red-500 text-3xl md:text-4xl leading-tight' : 'text-white text-3xl sm:text-4xl font-mono'
         } ${glitchText ? 'text-amber-300' : ''}`}>
           {finalDisplayText}
         </span>
